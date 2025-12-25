@@ -2,42 +2,49 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../redux/categorySlice';
-import { Library, Hash, ArrowRight, Image as ImageIcon } from 'lucide-react';
+import { Library, Hash, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Import i18n
 
 const AllCategories = () => {
   const dispatch = useDispatch();
+  const { t, i18n } = useTranslation(); // Initialisation
   const { categories: dbCategories, isLoading } = useSelector((state) => state.category);
 
   useEffect(() => {
     dispatch(getCategories());
   }, [dispatch]);
 
-  // Option statique "Tous les livres" (On garde celle-ci car elle est pratique)
+  const isArabic = i18n.language === 'ar';
+
+  // Option statique adaptée pour la traduction
   const allBooksOption = {
-    name: 'Tous les Livres',
+    name: t('all_categories_page.all_books_title'),
     path: '/shop',
     icon: <Library size={40} />,
     color: 'bg-gray-900 text-white',
-    desc: 'Toute notre collection sans filtre.'
+    desc: t('all_categories_page.all_books_desc')
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="max-w-7xl mx-auto">
         
+        {/* En-tête traduit */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Explorez par Catégorie</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {t('all_categories_page.title')}
+          </h1>
           <p className="text-gray-500 max-w-2xl mx-auto">
-            Trouvez exactement ce que vous cherchez.
+            {t('all_categories_page.subtitle')}
           </p>
         </div>
         
         {isLoading ? (
-             <p className="text-center text-gray-500">Chargement...</p>
+             <p className="text-center text-gray-500">{t('all_categories_page.loading')}</p>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             
-            {/* 1. Carte "Tous les livres" (Statique) */}
+            {/* 1. Carte "Tous les livres" (Statique mais traduite) */}
             <Link 
                 to={allBooksOption.path} 
                 className="bg-white p-6 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 flex flex-col items-center text-center group h-full"
@@ -51,7 +58,7 @@ const AllCategories = () => {
                 <p className="text-gray-500 text-xs leading-relaxed">{allBooksOption.desc}</p>
             </Link>
 
-            {/* 2. Cartes Dynamiques (Images depuis la BDD) */}
+            {/* 2. Cartes Dynamiques */}
             {dbCategories.map((cat) => {
                 return (
                   <Link 
@@ -59,17 +66,14 @@ const AllCategories = () => {
                     to={`/category/${cat.name}`} 
                     className="bg-white p-6 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 flex flex-col items-center text-center group h-full"
                   >
-                    {/* CERCLE IMAGE */}
                     <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-sm bg-gray-50 overflow-hidden group-hover:scale-110 transition-transform duration-300 border border-gray-100">
                         {cat.image ? (
-                            // CAS A : Il y a une image dans la base de données
                             <img 
                                 src={cat.image} 
                                 alt={cat.name} 
                                 className="w-full h-full object-cover" 
                             />
                         ) : (
-                            // CAS B : Pas d'image, on affiche une icône par défaut
                             <Hash size={32} className="text-gray-400" />
                         )}
                     </div>
@@ -78,13 +82,13 @@ const AllCategories = () => {
                         {cat.name}
                     </h2>
                     
-                    {/* Description générique (car la BDD n'a pas de description pour l'instant) */}
+                    {/* Description générique avec variable dynamique name */}
                     <p className="text-gray-500 text-xs leading-relaxed">
-                        Parcourir la collection {cat.name}
+                        {t('all_categories_page.browse_collection', { name: cat.name })}
                     </p>
 
                     <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500">
-                        <ArrowRight size={20} />
+                        {isArabic ? <ArrowLeft size={20} /> : <ArrowRight size={20} />}
                     </div>
                   </Link>
                 );

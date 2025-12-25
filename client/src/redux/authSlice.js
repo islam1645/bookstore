@@ -6,6 +6,8 @@ const user = JSON.parse(localStorage.getItem('user'));
 
 const initialState = {
   user: user ? user : null,
+  // On initialise isAdmin en vérifiant le localStorage au chargement
+  isAdmin: user ? user.isAdmin : false, 
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -13,11 +15,12 @@ const initialState = {
 };
 
 // Fonction asynchrone pour le Login
-export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
+export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
   try {
-    return await authService.login(user);
+    return await authService.login(userData);
   } catch (error) {
-    const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+    const message = (error.response && error.response.data && error.response.data.message) || 
+                    error.message || error.toString();
     return thunkAPI.rejectWithValue(message);
   }
 });
@@ -31,7 +34,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    reset: (state) => { // Pour remettre les erreurs à zéro
+    reset: (state) => {
       state.isLoading = false;
       state.isSuccess = false;
       state.isError = false;
@@ -47,15 +50,20 @@ export const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload;
+        // MISE À JOUR IMPORTANTE : On récupère le rôle Admin depuis le payload
+        state.isAdmin = action.payload.isAdmin || false; 
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload; // Le message d'erreur du backend
+        state.message = action.payload;
         state.user = null;
+        state.isAdmin = false; // Reset en cas d'échec
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
+        state.isAdmin = false; // Reset lors du logout
+        state.isSuccess = false;
       });
   },
 });

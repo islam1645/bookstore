@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getFeaturedBooks } from '../redux/bookSlice';
 import { Link } from 'react-router-dom';
 import { Star, ShoppingCart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const FeaturedCarousel = () => {
   const dispatch = useDispatch();
   const { featuredBooks } = useSelector((state) => state.books);
+  const { t } = useTranslation();
 
   useEffect(() => {
     dispatch(getFeaturedBooks());
@@ -21,7 +23,7 @@ const FeaturedCarousel = () => {
         {/* Titre de la section */}
         <div className="flex items-center gap-2 mb-6">
             <Star className="text-yellow-500 fill-yellow-500" />
-            <h2 className="text-2xl font-bold text-gray-800">La Sélection du Libraire</h2>
+            <h2 className="text-2xl font-bold text-gray-800">{t('home.librarian_selection')}</h2>
         </div>
 
         {/* Zone de défilement horizontal */}
