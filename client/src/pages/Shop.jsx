@@ -6,9 +6,6 @@ import BookCard from '../components/BookCard';
 import { Loader, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// 1. IMPORT POUR LE SEO
-import { Helmet } from 'react-helmet-async';
-
 const Shop = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -35,17 +32,6 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
-      
-      {/* 2. SEO SPÉCIFIQUE À LA BOUTIQUE */}
-      <Helmet>
-        <title>Boutique - Tous nos livres | BookStore Algérie</title>
-        <meta 
-          name="description" 
-          content="Explorez notre catalogue complet de livres. Trouvez votre prochaine lecture parmi nos catégories : Tech, Business, Roman et plus." 
-        />
-      </Helmet>
-      {/* -------------------------------- */}
-
       <div className="max-w-7xl mx-auto px-6">
         
         <h1 className="text-3xl font-bold text-blue-900 mb-8 text-center">Notre Catalogue</h1>

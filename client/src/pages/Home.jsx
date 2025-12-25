@@ -6,9 +6,6 @@ import BookCard from '../components/BookCard';
 import { Loader, Sparkles, ArrowRight } from 'lucide-react';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 
-// 1. IMPORT POUR LE SEO
-import { Helmet } from 'react-helmet-async';
-
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -16,31 +13,19 @@ const Home = () => {
   const { books, isLoading, isError, message } = useSelector((state) => state.books);
 
   useEffect(() => {
-    // On charge les livres uniquement s'ils ne sont pas déjà là pour économiser de la data
     if (books.length === 0) {
       dispatch(getBooks());
     }
   }, [dispatch, books.length]);
 
-  // On prend juste les 8 premiers livres pour l'accueil
   const latestBooks = books ? books.slice(0, 8) : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
       
-      {/* 2. CONFIGURATION SEO POUR CETTE PAGE */}
-      <Helmet>
-        <title>Accueil | BookStore Algérie</title>
-        <meta 
-          name="description" 
-          content="Le meilleur site de vente de livres en ligne en Algérie. Romans, Business, Tech et bien plus. Livraison rapide à domicile." 
-        />
-      </Helmet>
-      {/* ----------------------------------- */}
-
       {/* --- 1. BANNIÈRE HERO --- */}
       <div className="bg-blue-900 text-white py-20 px-6 text-center shadow-lg">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Bienvenue chez KutubDZ </h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Bienvenue chez KutubDZ</h1>
         <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto mb-8">
           Découvrez les meilleurs livres du moment, livrés directement chez vous en Algérie.
         </p>
