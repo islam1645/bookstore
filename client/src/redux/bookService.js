@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = '/api/books/';
+const API_URL = 'https://bookstore-d1k4.onrender.com/api/books/';
 
 // 1. Créer un livre (Route Protégée)
 const createBook = async (bookData, token) => {
