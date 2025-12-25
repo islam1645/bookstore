@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({
     origin: [
         "http://localhost:5173",                     // Pour tes tests sur PC
-        "https://bookstore-teal-eta.vercel.app",     // TON ADRESSE VERCEL ACTUELLE (Celle de la capture)
+        "https://kutubdz.vercel.app",     // TON ADRESSE VERCEL ACTUELLE (Celle de la capture)
         "https://bookstore.vercel.app"               // Au cas où tu renommes plus tard
     ],
     credentials: true // Important pour laisser passer les cookies/tokens si besoin
