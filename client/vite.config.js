@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000', // L'adresse de votre backend Node
+        target: 'https://bookstore-d1k4.onrender.com/api', // L'adresse de votre backend Node
         changeOrigin: true,
         secure: false,
       },

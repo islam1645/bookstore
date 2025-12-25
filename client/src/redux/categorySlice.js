@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/categories/';
+const API_URL = 'https://bookstore-d1k4.onrender.com/api/categories/';
 
 // Récupérer le token pour l'admin
 const getToken = (thunkAPI) => {

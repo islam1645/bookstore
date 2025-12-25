@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import bookService from './bookService';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/books/';
+const API_URL = 'https://bookstore-d1k4.onrender.com/api/books/';
 
 const initialState = {
   books: [],
@@ -40,7 +40,7 @@ export const getBooks = createAsyncThunk('books/getAll', async (_, thunkAPI) => 
 // --- NOUVEAU : Récupérer les livres "FEATURED" (Sélection) ---
 export const getFeaturedBooks = createAsyncThunk('books/getFeatured', async (_, thunkAPI) => {
   try {
-    // Appel vers http://localhost:5000/api/books/featured
+    // Appel vers https://bookstore-d1k4.onrender.com/api/books/featured
     const response = await axios.get(API_URL + 'featured');
     return response.data;
   } catch (error) {

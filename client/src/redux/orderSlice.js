@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/orders/';
+const API_URL = 'https://bookstore-d1k4.onrender.com/api/orders/';
 
 // Fonction utilitaire pour récupérer le token
 const getToken = (thunkAPI) => {
