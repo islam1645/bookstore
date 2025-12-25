@@ -1,19 +1,22 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { getBooks } from '../redux/bookSlice';
 import BookCard from '../components/BookCard';
 import { Loader, Sparkles, ArrowRight } from 'lucide-react';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 
+// 1. IMPORT POUR LE SEO
+import { Helmet } from 'react-helmet-async';
+
 const Home = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Initialisation de la navigation manuelle
+  const navigate = useNavigate();
   
   const { books, isLoading, isError, message } = useSelector((state) => state.books);
 
   useEffect(() => {
-    // On charge les livres uniquement s'ils ne sont pas déjà là
+    // On charge les livres uniquement s'ils ne sont pas déjà là pour économiser de la data
     if (books.length === 0) {
       dispatch(getBooks());
     }
@@ -25,9 +28,19 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       
+      {/* 2. CONFIGURATION SEO POUR CETTE PAGE */}
+      <Helmet>
+        <title>Accueil | BookStore Algérie</title>
+        <meta 
+          name="description" 
+          content="Le meilleur site de vente de livres en ligne en Algérie. Romans, Business, Tech et bien plus. Livraison rapide à domicile." 
+        />
+      </Helmet>
+      {/* ----------------------------------- */}
+
       {/* --- 1. BANNIÈRE HERO --- */}
       <div className="bg-blue-900 text-white py-20 px-6 text-center shadow-lg">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Bienvenue chez Pro-Bookstore</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Bienvenue chez KutubDZ </h1>
         <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto mb-8">
           Découvrez les meilleurs livres du moment, livrés directement chez vous en Algérie.
         </p>
@@ -59,9 +72,6 @@ const Home = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {latestBooks.map((book) => (
-              /* --- CORRECTION ESSENTIELLE --- */
-              /* On utilise une DIV cliquable au lieu d'un LINK */
-              /* Cela évite le bug du "lien dans un lien" si BookCard a des boutons */
               <div 
                 key={book._id} 
                 onClick={() => navigate(`/product/${book._id}`)} 

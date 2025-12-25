@@ -4,11 +4,14 @@ import { getBooks } from '../redux/bookSlice';
 import { getCategories } from '../redux/categorySlice';
 import BookCard from '../components/BookCard';
 import { Loader, Search, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // 1. Import indispensable pour la navigation manuelle
+import { useNavigate } from 'react-router-dom';
+
+// 1. IMPORT POUR LE SEO
+import { Helmet } from 'react-helmet-async';
 
 const Shop = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // 2. Initialisation du hook
+  const navigate = useNavigate();
   
   const { books, isLoading, isError, message } = useSelector((state) => state.books);
   const { categories } = useSelector((state) => state.category);
@@ -18,13 +21,11 @@ const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('Tout');
 
   useEffect(() => {
-    // On charge les données au montage du composant
     dispatch(getBooks());
     dispatch(getCategories());
   }, [dispatch]);
 
   // --- LOGIQUE DE FILTRAGE ---
-  // On filtre d'abord par recherche, puis par catégorie
   const filteredBooks = books ? books.filter((book) => {
     const matchSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         book.author.toLowerCase().includes(searchTerm.toLowerCase());
@@ -34,6 +35,17 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
+      
+      {/* 2. SEO SPÉCIFIQUE À LA BOUTIQUE */}
+      <Helmet>
+        <title>Boutique - Tous nos livres | BookStore Algérie</title>
+        <meta 
+          name="description" 
+          content="Explorez notre catalogue complet de livres. Trouvez votre prochaine lecture parmi nos catégories : Tech, Business, Roman et plus." 
+        />
+      </Helmet>
+      {/* -------------------------------- */}
+
       <div className="max-w-7xl mx-auto px-6">
         
         <h1 className="text-3xl font-bold text-blue-900 mb-8 text-center">Notre Catalogue</h1>
@@ -88,10 +100,6 @@ const Shop = () => {
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {filteredBooks.map((book) => (
-                    /* CORRECTION CRUCIALE : 
-                       On utilise une DIV avec onClick au lieu d'un <Link>.
-                       Cela rend la carte cliquable sans créer de conflit avec les liens à l'intérieur de BookCard.
-                    */
                     <div 
                         key={book._id} 
                         onClick={() => navigate(`/product/${book._id}`)} 
