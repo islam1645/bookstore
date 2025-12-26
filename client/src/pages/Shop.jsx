@@ -5,12 +5,12 @@ import { getCategories } from '../redux/categorySlice';
 import BookCard from '../components/BookCard';
 import { Loader, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // Import i18n
+import { useTranslation } from 'react-i18next';
 
 const Shop = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(); // Initialisation
+  const { t, i18n } = useTranslation();
   
   const { books, isLoading, isError, message } = useSelector((state) => state.books);
   const { categories } = useSelector((state) => state.category);
@@ -43,7 +43,7 @@ const Shop = () => {
         {/* --- BARRE DE RECHERCHE ET FILTRES --- */}
         <div className="bg-white p-4 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
             
-            {/* Barre de Recherche : On ajuste l'icône selon la direction */}
+            {/* Barre de Recherche */}
             <div className="relative w-full md:w-1/3">
                 <Search 
                     className={`absolute ${isArabic ? 'right-3' : 'left-3'} top-3 text-gray-400`} 
@@ -69,10 +69,12 @@ const Shop = () => {
                 {categories.map((cat) => (
                     <button 
                         key={cat._id}
+                        // On garde le nom technique pour la logique de filtrage
                         onClick={() => setSelectedCategory(cat.name)}
                         className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${selectedCategory === cat.name ? 'bg-blue-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
-                        {cat.name}
+                        {/* On affiche le nom traduit pour l'utilisateur */}
+                        {isArabic && cat.nameAr ? cat.nameAr : cat.name}
                     </button>
                 ))}
             </div>

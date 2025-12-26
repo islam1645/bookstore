@@ -5,7 +5,7 @@ import { getBooks, deleteBook, createBook, updateBook } from '../redux/bookSlice
 import { getAllOrders, markAsDelivered, markAsConfirmed, getOrderStats, deleteOrder, updateNote } from '../redux/orderSlice';
 import { getCategories, createCategory, deleteCategory, updateCategory } from '../redux/categorySlice';
 // Imports Icones
-import { Plus, Trash2, Package, Book, Truck, CheckCircle, Clock, PhoneCall, Tags, List, Pencil, X, BarChart3, TrendingUp, Wallet, Banknote, StickyNote, Image as ImageIcon, Star, ShoppingBag } from 'lucide-react';
+import { Plus, Trash2, Package, Book, Truck, CheckCircle, Clock, PhoneCall, Tags, List, Pencil, X, BarChart3, TrendingUp, Wallet, Banknote, StickyNote, Image as ImageIcon, Star, ShoppingBag, Globe } from 'lucide-react';
 import { toast } from 'react-toastify';
 // Imports Graphiques
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -25,6 +25,7 @@ const Dashboard = () => {
   
   // États Catégories
   const [newCategory, setNewCategory] = useState('');
+  const [newCategoryAr, setNewCategoryAr] = useState(''); // <--- NOUVEAU : État pour l'arabe
   const [newCatImage, setNewCatImage] = useState('');
   const [isEditingCat, setIsEditingCat] = useState(false);
   const [editCatId, setEditCatId] = useState(null);
@@ -66,7 +67,7 @@ const Dashboard = () => {
   const totalProfit = isStatsArray ? stats.reduce((acc, item) => acc + (item.totalProfit || 0), 0) : 0;
   const totalOrdersCount = isStatsArray ? stats.reduce((acc, i) => acc + (i.count || 0), 0) : 0;
 
-  // --- CALCUL DES LIVRES VENDUS (NOUVEAU) ---
+  // --- CALCUL DES LIVRES VENDUS ---
   const soldBooks = orders ? orders.reduce((acc, order) => {
       order.orderItems.forEach(item => {
           const existingItem = acc.find(i => i.title === item.title);
@@ -125,22 +126,32 @@ const Dashboard = () => {
     else toast.info('Retiré de la sélection');
   };
 
+  // --- GESTION CATEGORIES (MODIFIÉ) ---
   const handleCategorySubmit = (e) => { 
       e.preventDefault(); 
       if (newCategory.trim()) { 
+          // On prépare l'objet complet
+          const catData = { 
+            name: newCategory, 
+            nameAr: newCategoryAr, // On inclut l'arabe
+            image: newCatImage 
+          };
+
           if (isEditingCat) {
               dispatch(updateCategory({ 
                   id: editCatId, 
-                  categoryData: { name: newCategory, image: newCatImage } 
+                  categoryData: catData
               }));
               toast.success('Catégorie mise à jour !');
               setIsEditingCat(false);
               setEditCatId(null);
           } else {
-              dispatch(createCategory({ name: newCategory, image: newCatImage })); 
+              dispatch(createCategory(catData)); 
               toast.success('Catégorie ajoutée'); 
           }
+          // Reset des champs
           setNewCategory(''); 
+          setNewCategoryAr(''); // Reset arabe
           setNewCatImage(''); 
       }
   };
@@ -149,6 +160,7 @@ const Dashboard = () => {
       setIsEditingCat(true);
       setEditCatId(cat._id);
       setNewCategory(cat.name);
+      setNewCategoryAr(cat.nameAr || ''); // Charger l'arabe existant
       setNewCatImage(cat.image || '');
   };
 
@@ -156,6 +168,7 @@ const Dashboard = () => {
       setIsEditingCat(false);
       setEditCatId(null);
       setNewCategory('');
+      setNewCategoryAr('');
       setNewCatImage('');
   };
   
@@ -188,7 +201,6 @@ const Dashboard = () => {
             <BarChart3 size={20} /> Statistiques
           </button>
           
-          {/* NOUVEAU BOUTON VENTES */}
           <button onClick={() => setActiveTab('sales')} className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition ${activeTab === 'sales' ? 'bg-blue-900 text-white shadow-md' : 'bg-white text-gray-600'}`}>
             <ShoppingBag size={20} /> Ventes
           </button>
@@ -243,7 +255,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ==================== ONGLET VENTES (NOUVEAU) ==================== */}
+        {/* ==================== ONGLET VENTES ==================== */}
         {activeTab === 'sales' && (
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -385,6 +397,7 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* ==================== ONGLET COMMANDES ==================== */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
              {orders.length === 0 ? (
@@ -460,6 +473,7 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* ==================== ONGLET CATÉGORIES (MODIFIÉ) ==================== */}
         {activeTab === 'categories' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className={`p-6 rounded-xl shadow-sm h-fit transition-all ${isEditingCat ? 'bg-yellow-50 border-2 border-yellow-400' : 'bg-white'}`}>
@@ -473,22 +487,46 @@ const Dashboard = () => {
                 </div>
                 
                 <form onSubmit={handleCategorySubmit} className="flex flex-col gap-3">
-                    <input 
-                        type="text" 
-                        placeholder="Ex: Coding, Roman..." 
-                        value={newCategory} 
-                        onChange={(e) => setNewCategory(e.target.value)} 
-                        className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
-                        required 
-                    />
-                    <input 
-                        type="text" 
-                        placeholder="URL de l'image (https://...)" 
-                        value={newCatImage} 
-                        onChange={(e) => setNewCatImage(e.target.value)} 
-                        className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
-                    />
-                    <button type="submit" className={`px-4 py-2 rounded font-bold transition flex items-center justify-center gap-2 text-white ${isEditingCat ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-900 hover:bg-blue-800'}`}>
+                    {/* CHAMP FRANÇAIS */}
+                    <div>
+                        <label className="text-xs text-gray-500 font-bold ml-1">Nom (Français)</label>
+                        <input 
+                            type="text" 
+                            placeholder="Ex: Coding" 
+                            value={newCategory} 
+                            onChange={(e) => setNewCategory(e.target.value)} 
+                            className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                            required 
+                        />
+                    </div>
+
+                    {/* CHAMP ARABE (NOUVEAU) */}
+                    <div>
+                        <label className="text-xs text-gray-500 font-bold ml-1 flex items-center gap-1"><Globe size={12}/> Nom (Arabe)</label>
+                        <input 
+                            type="text" 
+                            placeholder="مثال: برمجة" 
+                            value={newCategoryAr} 
+                            onChange={(e) => setNewCategoryAr(e.target.value)} 
+                            className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none text-right" 
+                            dir="rtl" // Important pour l'écriture arabe
+                            required 
+                        />
+                    </div>
+
+                    {/* CHAMP IMAGE */}
+                    <div>
+                        <label className="text-xs text-gray-500 font-bold ml-1">Image URL</label>
+                        <input 
+                            type="text" 
+                            placeholder="https://..." 
+                            value={newCatImage} 
+                            onChange={(e) => setNewCatImage(e.target.value)} 
+                            className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                        />
+                    </div>
+
+                    <button type="submit" className={`px-4 py-2 rounded font-bold transition flex items-center justify-center gap-2 text-white mt-2 ${isEditingCat ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-900 hover:bg-blue-800'}`}>
                         {isEditingCat ? <Pencil size={18} /> : <Plus size={18} />} 
                         {isEditingCat ? 'Mettre à jour' : 'Ajouter'}
                     </button>
@@ -502,7 +540,6 @@ const Dashboard = () => {
                         {categories.map((cat) => (
                             <li key={cat._id} className="flex justify-between items-center bg-gray-50 p-3 rounded border hover:bg-blue-50 transition group">
                                 <div className="flex items-center gap-3">
-                                    {/* CORRECTION IMAGE CATEGORIE (ANTI-BROKEN LINK) */}
                                     {(cat.image && cat.image.startsWith('http')) ? (
                                         <img 
                                             src={cat.image} 
@@ -515,23 +552,27 @@ const Dashboard = () => {
                                             <ImageIcon size={18} />
                                         </div>
                                     )}
-                                    <span className="font-medium text-gray-800">{cat.name}</span>
+                                    {/* AFFICHAGE DES DEUX NOMS */}
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-800">{cat.name}</span>
+                                        <span className="text-xs text-gray-500 font-arabic">{cat.nameAr || '---'}</span>
+                                    </div>
                                 </div>
                                 <div className="flex gap-2">
                                      <button 
-                                        onClick={() => handleEditCategoryClick(cat)} 
-                                        className="text-yellow-500 hover:text-yellow-700 p-2 rounded-full hover:bg-yellow-50 transition" 
-                                        title="Modifier"
-                                     >
-                                        <Pencil size={18} />
-                                     </button>
-                                     <button 
-                                        onClick={() => handleDeleteCategory(cat._id)} 
-                                        className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" 
-                                        title="Supprimer"
-                                     >
-                                        <Trash2 size={18} />
-                                     </button>
+                                         onClick={() => handleEditCategoryClick(cat)} 
+                                         className="text-yellow-500 hover:text-yellow-700 p-2 rounded-full hover:bg-yellow-50 transition" 
+                                         title="Modifier"
+                                      >
+                                         <Pencil size={18} />
+                                      </button>
+                                      <button 
+                                         onClick={() => handleDeleteCategory(cat._id)} 
+                                         className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" 
+                                         title="Supprimer"
+                                      >
+                                         <Trash2 size={18} />
+                                      </button>
                                 </div>
                             </li>
                         ))}

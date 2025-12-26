@@ -22,6 +22,9 @@ import AllCategories from './pages/AllCategories';
 import PlaceOrder from './pages/PlaceOrder';
 import ProductDetails from './pages/ProductDetails';
 import MyOrders from './pages/MyOrders';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword'
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -51,6 +54,9 @@ function App() {
               {/* --- AUTHENTIFICATION CLIENTS --- */}
               <Route path="/user-login" element={<UserLogin />} />
               <Route path="/register" element={<UserRegister />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+              <Route path="/profile" element={<ProfilePage />} />
               
               {/* --- ROUTES ADMIN (SÉCURISÉES) --- */}
               

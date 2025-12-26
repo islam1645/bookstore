@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux'; // 1. Import Redux
+import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, User, ArrowRight, ArrowLeft } from 'lucide-react';
-import { toast } from 'react-toastify'; // Pour les notifications
-import { register, reset } from '../redux/authSlice'; // 2. Import de l'action
+import { toast } from 'react-toastify';
+import { register, reset } from '../redux/authSlice';
 
 const UserRegister = () => {
   const { t, i18n } = useTranslation();
@@ -13,7 +13,6 @@ const UserRegister = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // 3. On récupère l'état de l'authentification depuis Redux
   const { user, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
   );
@@ -26,33 +25,42 @@ const UserRegister = () => {
 
   const { name, email, password } = formData;
 
-  // 4. Gestion des effets (Succès ou Erreur)
   useEffect(() => {
     if (isError) {
-      toast.error(message); // Affiche l'erreur (ex: "Utilisateur existe déjà")
+      toast.error(message);
     }
 
     if (isSuccess || user) {
-      navigate('/'); // Redirige vers l'accueil si tout est bon
+      navigate('/');
     }
 
-    dispatch(reset()); // Remet les erreurs à zéro
+    dispatch(reset());
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 5. La fonction qui envoie les données
   const onSubmit = (e) => {
     e.preventDefault();
     
+    // 1. Vérifier si les champs sont vides
     if (!name || !email || !password) {
       toast.error(t('Veuillez remplir tous les champs'));
-    } else {
-      const userData = { name, email, password };
-      dispatch(register(userData)); // C'est ici que l'action part au serveur !
+      return; // Important : on arrête la fonction ici
     }
+
+    // 2. NOUVEAU : Vérifier la longueur du mot de passe (Minimum 8 caractères)
+    if (password.length < 8) {
+      toast.error(isArabic 
+        ? "كلمة المرور يجب أن تكون 8 أحرف على الأقل" 
+        : "Le mot de passe doit contenir au moins 8 caractères");
+      return; // On arrête si le mot de passe est trop court
+    }
+
+    // Si tout est bon, on envoie les données
+    const userData = { name, email, password };
+    dispatch(register(userData));
   };
 
   return (
@@ -112,12 +120,15 @@ const UserRegister = () => {
                 required
               />
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {isArabic ? 'يجب أن يحتوي على 8 أحرف على الأقل' : 'Doit contenir au moins 8 caractères'}
+            </p>
           </div>
 
           {/* BOUTON VALIDER */}
           <button 
             type="submit" 
-            disabled={isLoading} // Désactive le bouton pendant le chargement
+            disabled={isLoading}
             className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
           >
             {isLoading ? '...' : t('register_page.submit')}

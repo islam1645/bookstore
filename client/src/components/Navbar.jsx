@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../redux/authSlice';
-// Ajout de Package dans l'import lucide-react
 import { ShoppingCart, LogOut, LayoutDashboard, BookOpen, User, Package } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -12,7 +11,8 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
-  const { user, isAdmin } = useSelector((state) => state.auth);
+  // On récupère 'user' depuis le state Auth
+  const { user } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.cart);
 
   const onLogout = () => {
@@ -32,20 +32,12 @@ const Navbar = () => {
             <span>KutubDZ<span className="text-blue-500">.</span></span>
           </Link>
 
-          {/* MENU CENTRAL */}
+          {/* MENU CENTRAL (Desktop) */}
           <div className="hidden md:flex items-center space-x-8 rtl:space-x-reverse">
-            <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium transition">
-              {t('navbar.home')}
-            </Link>
-            <Link to="/shop" className="text-gray-600 hover:text-blue-600 font-medium transition">
-              {t('navbar.shop')}
-            </Link>
-            <Link to="/categories" className="text-gray-600 hover:text-blue-600 font-medium transition">
-              {t('navbar.categories')}
-            </Link>
-            <Link to="/about" className="text-gray-600 hover:text-blue-600 font-medium transition">
-              {t('navbar.about')}
-            </Link>
+            <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium transition">{t('navbar.home')}</Link>
+            <Link to="/shop" className="text-gray-600 hover:text-blue-600 font-medium transition">{t('navbar.shop')}</Link>
+            <Link to="/categories" className="text-gray-600 hover:text-blue-600 font-medium transition">{t('navbar.categories')}</Link>
+            <Link to="/about" className="text-gray-600 hover:text-blue-600 font-medium transition">{t('navbar.about')}</Link>
           </div>
 
           {/* ICONS & AUTH */}
@@ -53,6 +45,7 @@ const Navbar = () => {
             
             <LanguageSwitcher />
 
+            {/* PANIER */}
             <Link to="/cart" className="relative group text-gray-600 hover:text-blue-600 transition">
               <ShoppingCart size={24} />
               {cartItems.length > 0 && (
@@ -62,12 +55,12 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* Zone Authentifiée */}
+            {/* ZONE UTILISATEUR CONNECTÉ */}
             {user ? (
               <div className="flex items-center gap-4 border-l pl-6 border-gray-200 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-6">
                 
-                {/* DASHBOARD ADMIN */}
-                {isAdmin && (
+                {/* 1. DASHBOARD ADMIN (Seulement si admin) */}
+                {user.isAdmin && (
                   <Link 
                     to="/admin/dashboard" 
                     className="text-sm font-medium text-blue-700 hover:text-blue-900 flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg transition"
@@ -77,35 +70,48 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* MES COMMANDES CLIENT */}
-                {!isAdmin && (
-                  <div className="flex items-center gap-4">
+                {/* 2. MENU CLIENT (Mes Commandes & Profil) */}
+                {!user.isAdmin && (
+                  <>
                     <Link 
                       to="/my-orders" 
                       className="text-sm font-medium text-gray-700 hover:text-blue-600 flex items-center gap-1 transition"
+                      title={t('orders.title')}
                     >
-                      <Package size={18} className="text-blue-500" />
-                      <span>{t('orders.title')}</span>
+                      <Package size={20} className="text-blue-500" />
+                      <span className="hidden lg:inline">{t('orders.title')}</span>
                     </Link>
-                    <span className="text-sm text-gray-600 font-bold hidden sm:inline border-l pl-4 border-gray-200 rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4">
-                      {user.name}
-                    </span>
-                  </div>
+
+                    {/* LIEN VERS PROFIL (Nouveau) */}
+                    <Link 
+                      to="/profile" 
+                      className="text-sm font-medium text-gray-700 hover:text-blue-600 flex items-center gap-1 transition"
+                      title="Mon Profil"
+                    >
+                      <User size={20} className="text-gray-500" />
+                      {/* On affiche le nom de l'utilisateur comme lien vers le profil */}
+                      <span className="font-bold hidden sm:inline text-blue-900">
+                        {user.name.split(' ')[0]} {/* Affiche juste le prénom */}
+                      </span>
+                    </Link>
+                  </>
                 )}
                 
+                {/* 3. BOUTON DÉCONNEXION */}
                 <button 
                   onClick={onLogout} 
-                  className="text-red-500 hover:text-red-700 transition"
+                  className="text-red-500 hover:text-red-700 transition ml-2"
                   title={t('navbar.logout')}
                 >
-                  <LogOut size={18} />
+                  <LogOut size={20} />
                 </button>
               </div>
             ) : (
-                <Link to="/user-login" className="text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1">
-                    <User size={20} />
-                    <span className="hidden sm:inline">{t('navbar.login')}</span>
-                </Link>
+              // ZONE VISITEUR (Login)
+              <Link to="/user-login" className="text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1">
+                  <User size={24} />
+                  <span className="hidden sm:inline">{t('navbar.login')}</span>
+              </Link>
             )}
             
           </div>

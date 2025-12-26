@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { login, reset } from '../redux/authSlice'; // Assure-toi d'importer login !
+import { login, reset } from '../redux/authSlice';
 
 const UserLogin = () => {
   const { t, i18n } = useTranslation();
@@ -20,19 +20,17 @@ const UserLogin = () => {
 
   const { email, password } = formData;
 
-  // On récupère l'état depuis Redux
   const { user, isLoading, isError, isSuccess, message } = useSelector(
     (state) => state.auth
   );
 
   useEffect(() => {
     if (isError) {
-      toast.error(message); // Affiche "Mot de passe incorrect" ou "Email inconnu"
+      toast.error(message);
     }
 
-    // Si connecté avec succès
     if (isSuccess || user) {
-      navigate('/'); // On renvoie le client vers l'accueil
+      navigate('/');
     }
 
     dispatch(reset());
@@ -47,7 +45,6 @@ const UserLogin = () => {
     if (!email || !password) {
       toast.error(t('Veuillez remplir tous les champs'));
     } else {
-      // Envoi de la connexion
       dispatch(login({ email, password }));
     }
   };
@@ -90,6 +87,17 @@ const UserLogin = () => {
                 onChange={onChange}
               />
             </div>
+            
+            {/* --- AJOUT DU LIEN MOT DE PASSE OUBLIÉ ICI --- */}
+            <div className={`mt-2 flex ${isArabic ? 'justify-start' : 'justify-end'}`}>
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+              >
+                {isArabic ? 'نسيت كلمة المرور؟' : 'Mot de passe oublié ?'}
+              </Link>
+            </div>
+            {/* ------------------------------------------- */}
           </div>
 
           {/* BOUTON */}
