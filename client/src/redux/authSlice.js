@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { getApiUrl } from '../urlConfig'; // On utilise bien l'import ici
 
 // Récupérer l'utilisateur du stockage local
 const user = JSON.parse(localStorage.getItem('userInfo'));
@@ -12,19 +13,14 @@ const initialState = {
   message: '',
 };
 
-// Détection URL (Local ou Prod)
-const getApiUrl = () => {
-  return window.location.hostname === 'localhost' 
-    ? 'http://localhost:5000/api/users' 
-    : 'https://bookstore-d1k4.onrender.com/api/users';
-};
-
 // --- REGISTER (INSCRIPTION) ---
 // Note : On ne sauvegarde PAS le user ici car il doit valider l'OTP d'abord
 export const register = createAsyncThunk('auth/register', async (user, thunkAPI) => {
   try {
-    const API_URL = getApiUrl();
-    const response = await axios.post(API_URL, user);
+    const BASE_URL = getApiUrl();
+    // On ajoute '/users' à l'URL de base
+    const response = await axios.post(`${BASE_URL}/users`, user);
+    
     // ON NE FAIT PAS localStorage.setItem ICI !
     return response.data;
   } catch (error) {
@@ -44,8 +40,9 @@ export const setCredentials = createAsyncThunk('auth/setCredentials', async (use
 // --- LOGIN (CONNEXION CLASSIQUE) ---
 export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
   try {
-    const API_URL = getApiUrl() + '/login';
-    const response = await axios.post(API_URL, user);
+    const BASE_URL = getApiUrl();
+    // On ajoute '/users/login' à l'URL de base
+    const response = await axios.post(`${BASE_URL}/users/login`, user);
 
     if (response.data) {
       localStorage.setItem('userInfo', JSON.stringify(response.data));

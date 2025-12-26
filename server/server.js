@@ -27,6 +27,7 @@ app.use('/api/books', require('./routes/bookRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/settings', require('./routes/settingRoutes'));
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Serveur démarré sur le port ${port}`));

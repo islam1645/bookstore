@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Mail, Lock, User, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios'; // We use axios directly for the OTP step
-import { setCredentials } from '../redux/authSlice'; // To log in manually after OTP
+import { setCredentials } from '../redux/authSlice'; // To log in   manually after OTP
+import { getApiUrl } from '../urlConfig'; // Import the URL config  
 
 const UserRegister = () => {
   const { t, i18n } = useTranslation();
@@ -56,12 +57,10 @@ const UserRegister = () => {
     try {
       setLoading(true);
       // Backend URL detection
-      const API_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5000' 
-        : 'https://bookstore-d1k4.onrender.com';
+      const BASE_URL = getApiUrl();
 
       // Send data to backend (will trigger email sending)
-      await axios.post(`${API_URL}/api/users`, formData);
+      await axios.post(`${BASE_URL}/users`, formData);
       
       setLoading(false);
       setStep(2); // Move to OTP step
@@ -79,15 +78,13 @@ const UserRegister = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const API_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5000' 
-        : 'https://bookstore-d1k4.onrender.com';
+      const BASE_URL = getApiUrl();
 
       // Verify OTP
-      const res = await axios.post(`${API_URL}/api/users/verify-email`, {
-        email,
-        otp
-      });
+      const res = await axios.post(`${BASE_URL}/users/verify-email`, {
+      email,
+      otp
+    });
 
       // If success, log the user in
       dispatch(setCredentials(res.data));
