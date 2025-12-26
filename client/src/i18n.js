@@ -90,6 +90,20 @@ const resources = {
   "status_shipped": "En cours de livraison",
   "status_delivered": "Livré"
 },
+"about": {
+  "title": "À Propos de Nous",
+  "subtitle": "Votre passerelle vers la connaissance en Algérie.",
+  "story_title": "Notre Histoire",
+  "story_text": "Fondée en 2025, KutubDZ est née d'une passion simple : rendre la lecture accessible à tous les Algériens. Nous avons commencé avec une petite sélection de livres et une grande vision. Aujourd'hui, nous sommes fiers d'offrir une vaste bibliothèque de livres neufs, d'occasion et de liseuses numériques.",
+  "mission_title": "Notre Mission",
+  "mission_text": "Notre mission est d'encourager la culture de la lecture en Algérie en proposant des prix abordables et une livraison rapide vers les 58 wilayas. Nous croyons que chaque livre ouvert est un nouvel horizon découvert.",
+  "values": {
+    "quality": "Qualité Garantie",
+    "delivery": "Livraison 58 Wilayas",
+    "community": "Communauté Passionnée",
+    "support": "Service Client 7/7"
+  }
+}
     }
   },
   ar: {
@@ -179,6 +193,20 @@ const resources = {
   "status_pending": "قيد الانتظار",
   "status_shipped": "جاري التوصيل",
   "status_delivered": "تم التسليم"
+},
+"about": {
+  "title": "من نحن",
+  "subtitle": "بوابتك نحو المعرفة في الجزائر.",
+  "story_title": "قصتنا",
+  "story_text": "تأسست KutubDZ في عام 2025 بدافع شغف بسيط: جعل القراءة في متناول جميع الجزائريين. بدأنا بمجموعة صغيرة من الكتب ورؤية كبيرة. اليوم، نحن فخورون بتقديم مكتبة واسعة من الكتب الجديدة والمستعملة والقارئات الإلكترونية.",
+  "mission_title": "مهمتنا",
+  "mission_text": "مهمتنا هي تشجيع ثقافة القراءة في الجزائر من خلال توفير أسعار معقولة وخدمة توصيل سريعة لجميع الولايات الـ 58. نحن نؤمن بأن كل كتاب يُفتح هو أفق جديد يُكتشف.",
+  "values": {
+    "quality": "جودة مضمونة",
+    "delivery": "توصيل 58 ولاية",
+    "community": "مجتمع شغوف",
+    "support": "دعم فني 7/7"
+  }
 }
     }
   }

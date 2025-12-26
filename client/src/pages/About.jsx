@@ -1,46 +1,108 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { BookOpen, Truck, Users, Heart, CheckCircle } from 'lucide-react';
 
-const About = () => {
+const AboutPage = () => {
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
+    <div className="min-h-screen bg-gray-50">
+      
+      {/* HEADER / BANNIÈRE */}
+      <div className="bg-blue-900 text-white py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            {t('about.title')}
+          </h1>
+          <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
+            {t('about.subtitle')}
+          </p>
+        </div>
+      </div>
 
-        {/* Image d'en-tête */}
-        <div className="h-64 w-full bg-blue-900 flex items-center justify-center">
-          <h1 className="text-5xl font-bold text-white">Notre Histoire</h1>
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        
+        {/* SECTION HISTOIRE & MISSION */}
+        <div className={`flex flex-col md:flex-row gap-12 items-center mb-20 ${isArabic ? 'md:flex-row-reverse' : ''}`}>
+          
+          {/* Image illustrative */}
+          <div className="w-full md:w-1/2">
+            <img 
+              src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+              alt="Bookshelf" 
+              className="rounded-2xl shadow-xl w-full h-auto object-cover"
+            />
+          </div>
+
+          {/* Texte */}
+          <div className={`w-full md:w-1/2 space-y-8 ${isArabic ? 'text-right' : 'text-left'}`} dir={isArabic ? 'rtl' : 'ltr'}>
+            
+            {/* Notre Histoire */}
+            <div>
+              <div className={`flex items-center gap-3 mb-4 ${isArabic ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-blue-100 p-3 rounded-full text-blue-600">
+                  <BookOpen size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">{t('about.story_title')}</h2>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                {t('about.story_text')}
+              </p>
+            </div>
+
+            {/* Notre Mission */}
+            <div>
+              <div className={`flex items-center gap-3 mb-4 ${isArabic ? 'flex-row-reverse' : ''}`}>
+                <div className="bg-green-100 p-3 rounded-full text-green-600">
+                  <Heart size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">{t('about.mission_title')}</h2>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                {t('about.mission_text')}
+              </p>
+            </div>
+
+          </div>
         </div>
 
-        <div className="p-10 space-y-6 text-gray-700 leading-relaxed">
-          <h2 className="text-3xl font-bold text-gray-800">Qui sommes-nous ?</h2>
-          <p>
-            À Propos de KutubDz : La lecture à portée de clic en Algérie
-            Bienvenue chez KutubDz, votre nouvelle destination littéraire.
+        {/* SECTION VALEURS (GRID) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" dir={isArabic ? 'rtl' : 'ltr'}>
+          
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4">
+              <CheckCircle size={32} />
+            </div>
+            <h3 className="font-bold text-lg text-gray-800 mb-2">{t('about.values.quality')}</h3>
+          </div>
 
-            Fondée en 2025, KutubDz est née d'un constat simple mais puissant : trouver le livre que l'on cherche en Algérie ne devrait pas être un parcours du combattant. Que vous soyez étudiant, passionné de romans, professionnel ou amateur de nouvelles technologies, nous avons créé cet espace pour vous.
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
+              <Truck size={32} />
+            </div>
+            <h3 className="font-bold text-lg text-gray-800 mb-2">{t('about.values.delivery')}</h3>
+          </div>
 
-            Ce que nous proposons KutubDz se distingue par une offre hybride et complète :
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+            <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mx-auto mb-4">
+              <Users size={32} />
+            </div>
+            <h3 className="font-bold text-lg text-gray-800 mb-2">{t('about.values.community')}</h3>
+          </div>
 
-            Livres Neufs : Les dernières parutions mondiales et locales, livrées chez vous dans un état impeccable.
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
+            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-orange-600 mx-auto mb-4">
+              <BookOpen size={32} />
+            </div>
+            <h3 className="font-bold text-lg text-gray-800 mb-2">{t('about.values.support')}</h3>
+          </div>
 
-            Livres d'Occasion (Seconde main) : Parce qu'un livre a plusieurs vies, nous proposons une vaste sélection de livres d'occasion vérifiés, permettant de lire à petit prix tout en faisant un geste écologique.
-
-            Le Coin Numérique : Nous sommes tournés vers l'avenir. Découvrez notre sélection de tablettes e-book (liseuses) pour emporter votre bibliothèque partout avec vous.
-          </p>
-
-          <p>
-            Notre Mission Notre objectif est de révolutionner le marché du livre en Algérie. Nous croyons fermement que la lecture doit être accessible à tous, partout dans les 58 wilayas, et à tous les budgets. Nous ne vendons pas seulement des livres ; nous vendons de l'évasion, du savoir et de la culture.
-          </p>
-
-          <h2 className="text-2xl font-bold text-gray-800 mt-8">Pourquoi nous choisir ?</h2>
-          <ul className="list-disc list-inside space-y-2 pl-4">
-            <li>Une sélection rigoureuse des meilleurs ouvrages.</li>
-            <li>Une livraison rapide et fiable.</li>
-            <li>Un service client passionné et à l'écoute.</li>
-          </ul>
         </div>
+
       </div>
     </div>
   );
 };
 
-export default About;
+export default AboutPage;
