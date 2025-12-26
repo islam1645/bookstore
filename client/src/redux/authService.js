@@ -30,6 +30,7 @@ const logout = () => {
 };
 
 const authService = {
+  register, // <--- C'était l'oubli important ici !
   login,
   logout,
 };

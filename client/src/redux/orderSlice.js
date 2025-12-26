@@ -6,11 +6,8 @@ const API_URL = 'https://bookstore-d1k4.onrender.com/api/orders/';
 // Fonction utilitaire pour récupérer le token
 const getToken = (thunkAPI) => {
   const state = thunkAPI.getState();
-  // On vérifie si l'utilisateur est connecté dans le state auth
   const token = state.auth.user?.token;
   
-  // Si pas de token, cela va créer une erreur côté serveur, 
-  // mais on envoie quand même l'en-tête Bearer null ou undefined
   return {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -20,15 +17,11 @@ const getToken = (thunkAPI) => {
 
 // --- ACTIONS (THUNKS) ---
 
-// 1. Créer une commande (CORRIGÉ : AJOUT DU TOKEN)
+// 1. Créer une commande
 export const createOrder = createAsyncThunk('orders/create', async (orderData, thunkAPI) => {
   try {
-    // ON RÉCUPÈRE LE TOKEN ICI
     const config = getToken(thunkAPI); 
-    
-    // ON L'AJOUTE À LA REQUÊTE AXIOS (3ème argument)
     const response = await axios.post(API_URL, orderData, config);
-    
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
@@ -45,6 +38,19 @@ export const getAllOrders = createAsyncThunk('orders/getAll', async (_, thunkAPI
     return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
   }
 });
+
+// --- AJOUT IMPORTANT : Récupérer MES commandes (Client) ---
+export const listMyOrders = createAsyncThunk('orders/listMyOrders', async (_, thunkAPI) => {
+  try {
+    const config = getToken(thunkAPI);
+    // On appelle l'URL : /api/orders/myorders
+    const response = await axios.get(API_URL + 'myorders', config);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+// ---------------------------------------------------------
 
 // 3. Confirmer une commande
 export const markAsConfirmed = createAsyncThunk('orders/confirm', async (id, thunkAPI) => {
@@ -107,7 +113,7 @@ const orderSlice = createSlice({
   name: 'order',
   initialState: {
     orders: [],
-    stats: {}, // Initialisé comme objet vide
+    stats: {}, 
     isLoading: false,
     isSuccess: false,
     isError: false,
@@ -135,7 +141,7 @@ const orderSlice = createSlice({
           state.message = action.payload;
       })
       
-      // Get All
+      // Get All (Admin)
       .addCase(getAllOrders.pending, (state) => { state.isLoading = true; })
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -146,6 +152,21 @@ const orderSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
+
+      // --- AJOUT : Get MY Orders (Client) ---
+      .addCase(listMyOrders.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(listMyOrders.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.orders = action.payload; // On met à jour la liste avec MES commandes
+      })
+      .addCase(listMyOrders.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      // -------------------------------------
 
       // Stats
       .addCase(getOrderStats.fulfilled, (state, action) => {

@@ -6,12 +6,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton'; 
-import AdminRoute from './components/AdminRoute'; // <--- À CRÉER
+import AdminRoute from './components/AdminRoute'; 
 
 // Import des pages
 import Home from './pages/Home';
-import Login from './pages/Login'; // Page de connexion admin
-import UserLogin from './pages/UserLogin'; // Ta nouvelle page client
+import Login from './pages/Login';         // Page de connexion ADMIN (sécurisée)
+import UserLogin from './pages/UserLogin'; // Page de connexion CLIENT
 import UserRegister from './pages/UserRegister'; // Page d'inscription CLIENT
 import Dashboard from './pages/Dashboard';
 import Cart from './pages/Cart';
@@ -40,21 +40,23 @@ function App() {
               <Route path="/categories" element={<AllCategories />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
-              <Route path="/myorders" element={<MyOrders />} />
+              
+              {/* Correction ici : ajout du tiret pour correspondre à la Navbar */}
+              <Route path="/my-orders" element={<MyOrders />} />
               
               {/* Panier et Commande */}
               <Route path="/cart" element={<Cart />} />
               <Route path="/placeorder" element={<PlaceOrder />} />
               
-              {/* Authentification Clients */}
-              <Route path="/login" element={<Login />} />
+              {/* --- AUTHENTIFICATION CLIENTS --- */}
               <Route path="/user-login" element={<UserLogin />} />
               <Route path="/register" element={<UserRegister />} />
               
-              {/* --- ROUTES ADMIN (CACHÉES & PROTÉGÉES) --- */}
+              {/* --- ROUTES ADMIN (SÉCURISÉES) --- */}
               
-              {/* 1. Ta route secrète pour te connecter en admin */}
-              <Route path="/dz-admin-portal" element={<Login />} /> 
+              {/* 1. Page de connexion ADMIN (accessible via /login) */}
+              {/* Le composant Login.jsx bloquera les clients non-admin */}
+              <Route path="/login" element={<Login />} /> 
 
               {/* 2. Le Dashboard protégé par AdminRoute */}
               <Route 

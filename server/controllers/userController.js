@@ -29,7 +29,7 @@ const registerUser = async (req, res) => {
     name,
     email,
     password: hashedPassword,
-    isAdmin: true // ATTENTION : Mettez 'true' juste pour créer votre premier compte Admin, ensuite remettez 'false'
+    isAdmin: false // ATTENTION : Mettez 'true' juste pour créer votre premier compte Admin, ensuite remettez 'false'
   });
 
   if (user) {

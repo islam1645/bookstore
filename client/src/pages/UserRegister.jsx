@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux'; // 1. Import Redux
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, User, ArrowRight, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-toastify'; // Pour les notifications
+import { register, reset } from '../redux/authSlice'; // 2. Import de l'action
 
 const UserRegister = () => {
   const { t, i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // 3. On récupère l'état de l'authentification depuis Redux
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,8 +26,33 @@ const UserRegister = () => {
 
   const { name, email, password } = formData;
 
+  // 4. Gestion des effets (Succès ou Erreur)
+  useEffect(() => {
+    if (isError) {
+      toast.error(message); // Affiche l'erreur (ex: "Utilisateur existe déjà")
+    }
+
+    if (isSuccess || user) {
+      navigate('/'); // Redirige vers l'accueil si tout est bon
+    }
+
+    dispatch(reset()); // Remet les erreurs à zéro
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
+
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // 5. La fonction qui envoie les données
+  const onSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!name || !email || !password) {
+      toast.error(t('Veuillez remplir tous les champs'));
+    } else {
+      const userData = { name, email, password };
+      dispatch(register(userData)); // C'est ici que l'action part au serveur !
+    }
   };
 
   return (
@@ -26,7 +62,7 @@ const UserRegister = () => {
           <h2 className="text-3xl font-bold text-blue-900">{t('register_page.title')}</h2>
         </div>
 
-        <form className="space-y-5">
+        <form onSubmit={onSubmit} className="space-y-5">
           {/* CHAMP NOM */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t('register_page.name')}</label>
@@ -39,6 +75,7 @@ const UserRegister = () => {
                 placeholder="Ex: Mohamed Amine"
                 value={name}
                 onChange={onChange}
+                required
               />
             </div>
           </div>
@@ -55,6 +92,7 @@ const UserRegister = () => {
                 placeholder="votre@email.com"
                 value={email}
                 onChange={onChange}
+                required
               />
             </div>
           </div>
@@ -71,13 +109,18 @@ const UserRegister = () => {
                 placeholder="********"
                 value={password}
                 onChange={onChange}
+                required
               />
             </div>
           </div>
 
           {/* BOUTON VALIDER */}
-          <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 mt-4">
-            {t('register_page.submit')}
+          <button 
+            type="submit" 
+            disabled={isLoading} // Désactive le bouton pendant le chargement
+            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+          >
+            {isLoading ? '...' : t('register_page.submit')}
             {isArabic ? <ArrowLeft size={20}/> : <ArrowRight size={20}/>}
           </button>
         </form>
