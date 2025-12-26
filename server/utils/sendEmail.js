@@ -2,15 +2,14 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,               // <--- RETOUR AU PORT 587
-    secure: false,           // <--- IMPORTANT : false pour le port 587
+    service: 'gmail', // <--- ON UTILISE LE PRÉRÉGLAGE INTERNE
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    // On garde ça pour éviter les problèmes de certificats
     tls: {
-      rejectUnauthorized: false // C'est CA qui va empêcher le blocage
+      rejectUnauthorized: false
     }
   });
 
@@ -21,9 +20,9 @@ const sendEmail = async (options) => {
     text: options.message,
   };
 
-  console.log("Tentative connexion SMTP..."); // Log pour voir si ça démarre
+  console.log("Tentative envoi via Service Gmail...");
   await transporter.sendMail(message);
-  console.log("Email envoyé !"); // Log pour voir si ça finit
+  console.log("Email envoyé !");
 };
 
 module.exports = sendEmail;
