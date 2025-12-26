@@ -1,14 +1,19 @@
-// backend/utils/sendEmail.js
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // 1. Créer le transporteur (Configuration Gmail)
+  // 1. Créer le transporteur avec configuration EXPLICITE
   const transporter = nodemailer.createTransport({
-    service: 'gmail', // Ou autre service (Outlook, etc.)
+    host: 'smtp.gmail.com',     // On force l'adresse de Gmail
+    port: 587,                  // On force le port 587 (Standard TLS)
+    secure: false,              // false pour le port 587 (STARTTLS)
     auth: {
-      user: process.env.EMAIL_USER, // Ton email (dans .env)
-      pass: process.env.EMAIL_PASS, // Ton mot de passe d'application (PAS ton mot de passe normal)
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
+    // Cette option est MAGIQUE pour Render : elle évite les erreurs de certificats
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 
   // 2. Définir le mail
@@ -17,7 +22,6 @@ const sendEmail = async (options) => {
     to: options.email,
     subject: options.subject,
     text: options.message,
-    // html: options.html // Tu pourras ajouter du HTML plus tard pour faire joli
   };
 
   // 3. Envoyer

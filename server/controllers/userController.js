@@ -56,15 +56,19 @@ const registerUser = asyncHandler(async (req, res) => {
         message,
       });
       
-      // On ne renvoie PAS le token, juste un succès
       res.status(201).json({
         success: true,
         message: "Compte créé ! Veuillez vérifier vos emails pour le code."
       });
     } catch (error) {
+      // --- CORRECTION CRUCIALE ICI ---
+      // On affiche l'erreur exacte dans la console (Visible dans les Logs Render)
+      console.error("ERREUR DÉTAILLÉE NODEMAILER :", error); 
+
       await User.findByIdAndDelete(user._id); // On supprime l'user si l'email échoue
       res.status(500);
-      throw new Error("Erreur d'envoi d'email, réessayez.");
+      // On renvoie le message technique pour t'aider à débugger
+      throw new Error("Erreur d'envoi d'email : " + error.message);
     }
   } else {
     res.status(400);
@@ -92,7 +96,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      token: generateToken(user._id), // On connecte l'utilisateur maintenant !
+      token: generateToken(user._id),
     });
   } else {
     res.status(400);
@@ -158,7 +162,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
   await user.save();
 
   // 4. Créer l'URL de réinitialisation
-  // NOTE: Utiliser process.env.CLIENT_URL en production est recommandé
   const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
@@ -173,6 +176,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true, data: "Email envoyé" });
   } catch (error) {
+    console.error("Erreur Reset Password Email:", error); // Ajout log ici aussi
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
@@ -205,8 +209,8 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   // 3. Vérifier la longueur du nouveau mot de passe
   if (req.body.password.length < 8) {
-     res.status(400);
-     throw new Error('Le mot de passe doit contenir 8 caractères minimum');
+      res.status(400);
+      throw new Error('Le mot de passe doit contenir 8 caractères minimum');
   }
 
   // 4. Mettre à jour le mot de passe
@@ -224,53 +228,4 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 // @desc    Mettre à jour le profil utilisateur
 // @route   PUT /api/users/profile
-// @access  Privé (Nécessite d'être connecté)
-const updateUserProfile = asyncHandler(async (req, res) => {
-  // req.user est récupéré grâce au middleware 'protect' (vérification du token)
-  const user = await User.findById(req.user._id);
-
-  if (user) {
-    // On met à jour le nom et l'email s'ils sont envoyés, sinon on garde l'ancien
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-
-    // Si l'utilisateur envoie un nouveau mot de passe
-    if (req.body.password) {
-      if (req.body.password.length < 8) {
-        res.status(400);
-        throw new Error('Le mot de passe doit contenir au moins 8 caractères');
-      }
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(req.body.password, salt);
-    }
-
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      isAdmin: updatedUser.isAdmin,
-      token: generateToken(updatedUser._id),
-    });
-  } else {
-    res.status(404);
-    throw new Error('Utilisateur non trouvé');
-  }
-});
-
-// Fonction utilitaire pour générer le JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
-};
-
-module.exports = { 
-    registerUser, 
-    loginUser, 
-    forgotPassword, 
-    resetPassword, 
-    updateUserProfile, 
-    verifyEmail 
-};
+// @access  Privé
