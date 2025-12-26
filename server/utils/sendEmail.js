@@ -1,31 +1,28 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // 1. Créer le transporteur avec configuration EXPLICITE
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',     // On force l'adresse de Gmail
-    port: 587,                  // On force le port 587 (Standard TLS)
-    secure: false,              // false pour le port 587 (STARTTLS)
+    host: 'smtp.gmail.com',
+    port: 465,               // <--- ON PASSE SUR LE PORT 465
+    secure: true,            // <--- VRAI (TRUE) pour le port 465
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    // Cette option est MAGIQUE pour Render : elle évite les erreurs de certificats
     tls: {
+      // Cette ligne permet d'éviter les erreurs de certificats sur Render
       rejectUnauthorized: false
     }
   });
 
-  // 2. Définir le mail
-  const mailOptions = {
-    from: `KutubDZ Support <${process.env.EMAIL_USER}>`,
+  const message = {
+    from: `KutubDZ <${process.env.EMAIL_USER}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
   };
 
-  // 3. Envoyer
-  await transporter.sendMail(mailOptions);
+  await transporter.sendMail(message);
 };
 
 module.exports = sendEmail;
