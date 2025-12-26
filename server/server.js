@@ -16,6 +16,8 @@ app.use(cors({
         "https://bookstore.vercel.app"               // Au cas où tu renommes plus tard
     ],
     credentials: true // Important pour laisser passer les cookies/tokens si besoin
+    methods: ["GET", "POST", "PUT", "DELETE"], // Les actions autorisées
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 // ---------------------------
 
