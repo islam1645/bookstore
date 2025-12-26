@@ -2,11 +2,12 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST, // Sera smtp-relay.brevo.com
-    port: Number(process.env.EMAIL_PORT), // Sera 587
-    secure: false, 
+    host: 'smtp-relay.brevo.com', // On force l'hôte Brevo
+    port: 587,
+    secure: false, // Standard pour le port 587
     auth: {
-      user: process.env.EMAIL_USER,
+      // ICI on utilise les variables techniques pour se CONNECTER
+      user: process.env.EMAIL_USER, 
       pass: process.env.EMAIL_PASS,
     },
     tls: {
@@ -15,15 +16,17 @@ const sendEmail = async (options) => {
   });
 
   const message = {
-    from: `KutubDZ <${process.env.EMAIL_USER}>`, // L'email que tu as validé sur Brevo
+    // ICI on met ton VRAI email pour l'ENVOI (Visible par le client)
+    // Remplace bien 'saidoun.islam@gmail.com' par ton email si différent
+    from: `KutubDZ <saidoun.islam@gmail.com>`, 
     to: options.email,
     subject: options.subject,
     text: options.message,
   };
 
-  console.log("Tentative envoi SMTP...");
+  console.log("Connexion SMTP avec User:", process.env.EMAIL_USER); // Log de debug
   await transporter.sendMail(message);
-  console.log("Email envoyé !");
+  console.log("Email envoyé avec succès !");
 };
 
 module.exports = sendEmail;

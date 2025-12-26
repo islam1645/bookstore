@@ -10,61 +10,60 @@ const sendEmail = require('../utils/sendEmail');
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  console.log("1. Début registerUser pour:", email);
 
-  // 1. Vérifier que tout est rempli
   if (!name || !email || !password) {
     res.status(400);
     throw new Error('Veuillez remplir tous les champs');
   }
 
-  // 2. Vérifier la longueur du mot de passe
-  if (password.length < 8) {
-    res.status(400);
-    throw new Error('Le mot de passe doit contenir au moins 8 caractères');
-  }
-
-  // 3. Vérifier si l'user existe déjà
   const userExists = await User.findOne({ email });
   if (userExists) {
     res.status(400);
     throw new Error('Cet utilisateur existe déjà');
   }
 
-  // 4. Générer OTP et Hacher MDP
+  // 4. Générer OTP
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = Date.now() + 10 * 60 * 1000;
+  console.log("2. OTP généré:", otpCode);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 5. Créer l'user (Non vérifié)
+  // 5. Créer l'user
+  console.log("3. Tentative de création dans MongoDB...");
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
     isVerified: false, 
     otp: otpCode,
-    otpExpires: Date.now() + 10 * 60 * 1000 // Expire dans 10 min
+    otpExpires: otpExpires
   });
 
   if (user) {
-    // Envoyer l'email
+    console.log("4. Utilisateur créé avec ID:", user._id);
+    console.log("   Champs OTP en BDD:", user.otp);
+
     const message = `Votre code de vérification pour KutubDZ est : ${otpCode}`;
     try {
+      console.log("5. Tentative d'envoi d'email via Brevo...");
       await sendEmail({
         email: user.email,
         subject: 'KutubDZ - Vérifiez votre email',
         message,
       });
       
+      console.log("6. Email envoyé avec succès!");
       res.status(201).json({
         success: true,
         message: "Compte créé ! Veuillez vérifier vos emails pour le code."
       });
     } catch (error) {
-      // LOGS pour debugger Render
-      console.error("ERREUR DÉTAILLÉE NODEMAILER :", error); 
-
-      await User.findByIdAndDelete(user._id); // On supprime l'user si l'email échoue
+      console.error("ERREUR CRITIQUE EMAIL :", error.message); 
+      // On supprime l'user pour permettre de recommencer proprement
+      await User.findByIdAndDelete(user._id); 
       res.status(500);
       throw new Error("Erreur d'envoi d'email : " + error.message);
     }
@@ -75,15 +74,11 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 // @desc    Vérifier l'email avec le code OTP
-// @route   POST /api/users/verify-email
-// @access  Public
 const verifyEmail = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-
   const user = await User.findOne({ email });
 
   if (user && user.otp === otp && user.otpExpires > Date.now()) {
-    // Validation réussie
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpires = undefined;
@@ -103,18 +98,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 // @desc    Se connecter (Login)
-// @route   POST /api/users/login
-// @access  Public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  // Trouver l'utilisateur par email
   const user = await User.findOne({ email });
 
-  // Vérifier le mot de passe
   if (user && (await bcrypt.compare(password, user.password))) {
-    
-    // VÉRIFICATION OTP ICI
     if (!user.isVerified) {
        res.status(401);
        throw new Error("Veuillez d'abord vérifier votre email.");
@@ -133,9 +121,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Mot de passe oublié (Envoi de l'email)
-// @route   POST /api/users/forgot-password
-// @access  Public
+// @desc    Mot de passe oublié
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -145,109 +131,62 @@ const forgotPassword = asyncHandler(async (req, res) => {
     throw new Error("Aucun utilisateur trouvé avec cet email");
   }
 
-  // 1. Générer un token de réinitialisation
   const resetToken = crypto.randomBytes(20).toString('hex');
-
-  // 2. Hasher le token et l'enregistrer dans la BDD
-  user.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  // 3. Définir l'expiration (10 minutes)
+  user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
-
   await user.save();
 
-  // 4. Créer l'URL de réinitialisation
   const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
   const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
-
-  const message = `Vous avez demandé la réinitialisation de votre mot de passe. \n\n Veuillez cliquer sur ce lien : \n\n ${resetUrl}`;
+  const message = `Lien de réinitialisation : \n\n ${resetUrl}`;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'KutubDZ - Réinitialisation du mot de passe',
-      message,
-    });
-
+    await sendEmail({ email: user.email, subject: 'Réinitialisation', message });
     res.status(200).json({ success: true, data: "Email envoyé" });
   } catch (error) {
-    console.error("Erreur Reset Password Email:", error);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
-
     res.status(500);
     throw new Error("L'email n'a pas pu être envoyé");
   }
 });
 
-// @desc    Réinitialiser le mot de passe (Validation du nouveau mdp)
-// @route   PUT /api/users/reset-password/:resetToken
-// @access  Public
+// @desc    Réinitialiser le mot de passe
 const resetPassword = asyncHandler(async (req, res) => {
-  // 1. Récupérer le token haché pour le comparer à la BDD
-  const resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(req.params.resetToken)
-    .digest('hex');
-
-  // 2. Chercher l'utilisateur avec ce token ET vérification date expiration
-  const user = await User.findOne({
-    resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
+  const user = await User.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
 
   if (!user) {
     res.status(400);
     throw new Error('Token invalide ou expiré');
   }
 
-  // 3. Vérifier la longueur du nouveau mot de passe
   if (req.body.password.length < 8) {
       res.status(400);
-      throw new Error('Le mot de passe doit contenir 8 caractères minimum');
+      throw new Error('8 caractères minimum');
   }
 
-  // 4. Mettre à jour le mot de passe
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(req.body.password, salt);
-
-  // 5. Nettoyer les champs de reset
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
-
   await user.save();
 
-  res.status(200).json({ success: true, data: "Mot de passe mis à jour avec succès" });
+  res.status(200).json({ success: true, data: "Mot de passe mis à jour" });
 });
 
-// @desc    Mettre à jour le profil utilisateur
-// @route   PUT /api/users/profile
-// @access  Privé (Nécessite d'être connecté)
+// @desc    Mettre à jour le profil
 const updateUserProfile = asyncHandler(async (req, res) => {
-  // req.user vient du middleware 'protect'
   const user = await User.findById(req.user._id);
-
   if (user) {
-    // On garde l'ancien nom/email si le client n'envoie rien de nouveau
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-
-    // Si le client envoie un mot de passe, on le change
     if (req.body.password) {
-      if (req.body.password.length < 8) {
-        res.status(400);
-        throw new Error('Le mot de passe doit contenir au moins 8 caractères');
-      }
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(req.body.password, salt);
     }
-
     const updatedUser = await user.save();
-
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
@@ -261,14 +200,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-// --- FONCTION MANQUANTE : GENERATE TOKEN ---
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-// --- EXPORTATIONS (C'est ça qui manquait !) ---
 module.exports = { 
     registerUser, 
     loginUser, 
