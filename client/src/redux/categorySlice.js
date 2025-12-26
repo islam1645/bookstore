@@ -1,10 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// Change l'URL selon ton environnement (local ou prod)
-// Si tu as un proxy dans vite.config.js, garde juste '/api/categories/'
-const API_URL = 'http://localhost:5000/api/categories/'; 
+// Détection automatique de l'environnement
+const BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000' 
+  : 'https://bookstore-d1k4.onrender.com'; // Ton URL Render
 
+const API_URL = `${BASE_URL}/api/categories/`;
 // 1. Récupérer les catégories
 export const getCategories = createAsyncThunk('categories/getAll', async (_, thunkAPI) => {
   try {
