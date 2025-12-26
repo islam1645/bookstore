@@ -5,7 +5,7 @@ const User = require('../models/userModel');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
-// @desc    Enregistrer un nouvel utilisateur
+// @desc    Enregistrer un nouvel utilisateur (Avec OTP)
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
@@ -30,29 +30,73 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('Cet utilisateur existe déjà');
   }
 
-  // 4. Crypter le mot de passe
+  // 4. Générer OTP et Hacher MDP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 5. Créer l'user
+  // 5. Créer l'user (Non vérifié)
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
-    isAdmin: false // Par défaut, c'est un client
+    isVerified: false, 
+    otp: otpCode,
+    otpExpires: Date.now() + 10 * 60 * 1000 // Expire dans 10 min
   });
 
   if (user) {
-    res.status(201).json({
-      _id: user.id,
+    // Envoyer l'email
+    const message = `Votre code de vérification pour KutubDZ est : ${otpCode}`;
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'KutubDZ - Vérifiez votre email',
+        message,
+      });
+      
+      // On ne renvoie PAS le token, juste un succès
+      res.status(201).json({
+        success: true,
+        message: "Compte créé ! Veuillez vérifier vos emails pour le code."
+      });
+    } catch (error) {
+      await User.findByIdAndDelete(user._id); // On supprime l'user si l'email échoue
+      res.status(500);
+      throw new Error("Erreur d'envoi d'email, réessayez.");
+    }
+  } else {
+    res.status(400);
+    throw new Error('Données invalides');
+  }
+});
+
+// @desc    Vérifier l'email avec le code OTP
+// @route   POST /api/users/verify-email
+// @access  Public
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (user && user.otp === otp && user.otpExpires > Date.now()) {
+    // Validation réussie
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({
+      _id: user._id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      token: generateToken(user._id),
+      token: generateToken(user._id), // On connecte l'utilisateur maintenant !
     });
   } else {
     res.status(400);
-    throw new Error('Données utilisateur invalides');
+    throw new Error("Code invalide ou expiré");
   }
 });
 
@@ -67,6 +111,13 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // Vérifier le mot de passe
   if (user && (await bcrypt.compare(password, user.password))) {
+    
+    // VÉRIFICATION OTP ICI
+    if (!user.isVerified) {
+       res.status(401);
+       throw new Error("Veuillez d'abord vérifier votre email.");
+    }
+
     res.json({
       _id: user.id,
       name: user.name,
@@ -107,8 +158,9 @@ const forgotPassword = asyncHandler(async (req, res) => {
   await user.save();
 
   // 4. Créer l'URL de réinitialisation
-  // NOTE: En production, remplace localhost par ton vrai nom de domaine via process.env
-  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+  // NOTE: Utiliser process.env.CLIENT_URL en production est recommandé
+  const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const resetUrl = `${baseUrl}/reset-password/${resetToken}`;
 
   const message = `Vous avez demandé la réinitialisation de votre mot de passe. \n\n Veuillez cliquer sur ce lien : \n\n ${resetUrl}`;
 
@@ -129,8 +181,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     throw new Error("L'email n'a pas pu être envoyé");
   }
 });
-
-// --- AJOUT ESSENTIEL CI-DESSOUS ---
 
 // @desc    Réinitialiser le mot de passe (Validation du nouveau mdp)
 // @route   PUT /api/users/reset-password/:resetToken
@@ -172,12 +222,6 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: "Mot de passe mis à jour avec succès" });
 });
 
-// Fonction utilitaire pour générer le JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
-};
 // @desc    Mettre à jour le profil utilisateur
 // @route   PUT /api/users/profile
 // @access  Privé (Nécessite d'être connecté)
@@ -196,8 +240,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('Le mot de passe doit contenir au moins 8 caractères');
       }
-      // Le hashage se fera automatiquement si tu as un middleware 'pre-save' dans ton modèle
-      // Sinon, on le hash ici manuellement comme dans le register :
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(req.body.password, salt);
     }
@@ -216,5 +258,19 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     throw new Error('Utilisateur non trouvé');
   }
 });
-// N'oublie pas d'ajouter resetPassword dans l'export !
-module.exports = { registerUser, loginUser, forgotPassword, resetPassword ,updateUserProfile };
+
+// Fonction utilitaire pour générer le JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
+};
+
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    forgotPassword, 
+    resetPassword, 
+    updateUserProfile, 
+    verifyEmail 
+};

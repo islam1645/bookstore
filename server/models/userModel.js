@@ -20,8 +20,12 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false, // Par défaut, un utilisateur n'est pas admin
     },
+    isVerified: { type: Boolean, default: false }, // Par défaut, il n'est pas vérifié
+    // ----OTP--------
+    otp: { type: String }, // Le code temporaire
+    otpExpires: { type: Date }, // Date d'expiration du code
     resetPasswordToken: String,
-  resetPasswordExpire: Date
+    resetPasswordExpire: Date
   },
   {
     timestamps: true,

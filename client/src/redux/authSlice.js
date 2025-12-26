@@ -1,43 +1,66 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import authService from './authService';
+import axios from 'axios';
 
-// Récupérer l'utilisateur du stockage local s'il existe
-const user = JSON.parse(localStorage.getItem('user'));
+// Récupérer l'utilisateur du stockage local
+const user = JSON.parse(localStorage.getItem('userInfo'));
 
 const initialState = {
   user: user ? user : null,
-  isAdmin: user ? user.isAdmin : false, 
   isError: false,
   isSuccess: false,
   isLoading: false,
   message: '',
 };
 
-// 1. Fonction asynchrone pour l'Inscription (AJOUTÉE)
+// Détection URL (Local ou Prod)
+const getApiUrl = () => {
+  return window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api/users' 
+    : 'https://bookstore-d1k4.onrender.com/api/users';
+};
+
+// --- REGISTER (INSCRIPTION) ---
+// Note : On ne sauvegarde PAS le user ici car il doit valider l'OTP d'abord
 export const register = createAsyncThunk('auth/register', async (user, thunkAPI) => {
   try {
-    return await authService.register(user);
+    const API_URL = getApiUrl();
+    const response = await axios.post(API_URL, user);
+    // ON NE FAIT PAS localStorage.setItem ICI !
+    return response.data;
   } catch (error) {
-    const message = (error.response && error.response.data && error.response.data.message) || 
-                    error.message || error.toString();
+    const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
     return thunkAPI.rejectWithValue(message);
   }
 });
 
-// 2. Fonction asynchrone pour le Login
-export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
+// --- SET CREDENTIALS (CONNEXION MANUELLE APRÈS OTP) ---
+// Cette action sert à connecter l'utilisateur une fois qu'on a le token
+export const setCredentials = createAsyncThunk('auth/setCredentials', async (userData, thunkAPI) => {
+    // On sauvegarde dans le localStorage car c'est une vraie connexion
+    localStorage.setItem('userInfo', JSON.stringify(userData));
+    return userData;
+});
+
+// --- LOGIN (CONNEXION CLASSIQUE) ---
+export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
   try {
-    return await authService.login(userData);
+    const API_URL = getApiUrl() + '/login';
+    const response = await axios.post(API_URL, user);
+
+    if (response.data) {
+      localStorage.setItem('userInfo', JSON.stringify(response.data));
+    }
+
+    return response.data;
   } catch (error) {
-    const message = (error.response && error.response.data && error.response.data.message) || 
-                    error.message || error.toString();
+    const message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
     return thunkAPI.rejectWithValue(message);
   }
 });
 
-// 3. Fonction pour le Logout
+// --- LOGOUT ---
 export const logout = createAsyncThunk('auth/logout', async () => {
-  await authService.logout();
+  localStorage.removeItem('userInfo');
 });
 
 export const authSlice = createSlice({
@@ -53,34 +76,15 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // --- Gestion du Login ---
-      .addCase(login.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(login.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.user = action.payload;
-        state.isAdmin = action.payload.isAdmin || false; 
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-        state.user = null;
-        state.isAdmin = false;
-      })
-      
-      // --- Gestion du Register (AJOUTÉE) ---
+      // --- REGISTER CASES ---
       .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload;
-        // Un nouvel inscrit n'est généralement pas admin par défaut
-        state.isAdmin = false; 
+        // IMPORTANT : On NE connecte PAS l'utilisateur ici (state.user reste null)
+        state.message = action.payload.message; 
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -89,11 +93,31 @@ export const authSlice = createSlice({
         state.user = null;
       })
 
-      // --- Gestion du Logout ---
+      // --- LOGIN CASES ---
+      .addCase(login.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload; // Ici on connecte
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        state.user = null;
+      })
+
+      // --- SET CREDENTIALS CASES (OTP) ---
+      .addCase(setCredentials.fulfilled, (state, action) => {
+          state.user = action.payload;
+          state.isSuccess = true;
+      })
+
+      // --- LOGOUT CASE ---
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.isAdmin = false;
-        state.isSuccess = false;
       });
   },
 });
