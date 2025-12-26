@@ -3,15 +3,14 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,               // <--- ON PASSE SUR LE PORT 465
-    secure: true,            // <--- VRAI (TRUE) pour le port 465
+    port: 587,               // <--- RETOUR AU PORT 587
+    secure: false,           // <--- IMPORTANT : false pour le port 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
     tls: {
-      // Cette ligne permet d'éviter les erreurs de certificats sur Render
-      rejectUnauthorized: false
+      rejectUnauthorized: false // C'est CA qui va empêcher le blocage
     }
   });
 
@@ -22,7 +21,9 @@ const sendEmail = async (options) => {
     text: options.message,
   };
 
+  console.log("Tentative connexion SMTP..."); // Log pour voir si ça démarre
   await transporter.sendMail(message);
+  console.log("Email envoyé !"); // Log pour voir si ça finit
 };
 
 module.exports = sendEmail;
