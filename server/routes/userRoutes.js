@@ -1,21 +1,30 @@
 const express = require('express');
 const router = express.Router();
-// On importe TOUTES les fonctions, y compris resetPassword
-const { 
-  registerUser, 
-  loginUser, 
-  forgotPassword, 
-  resetPassword ,
-  updateUserProfile,
-  verifyEmail
+const {
+  registerUser,
+  loginUser,
+  verifyEmail,       // <--- C'est souvent celle-ci qui manque !
+  forgotPassword,
+  resetPassword,
+  updateUserProfile
 } = require('../controllers/userController');
+
 const { protect } = require('../middleware/authMiddleware');
-// Routes
+
+// Route d'inscription (Création + Envoi OTP)
 router.post('/', registerUser);
+
+// Route de vérification OTP (Nouvelle !)
+router.post('/verify-email', verifyEmail);
+
+// Route de connexion
 router.post('/login', loginUser);
+
+// Routes Mot de passe oublié
 router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:resetToken', resetPassword);
-router.route('/profile').put(protect, updateUserProfile);
-router.route('/verify-email').post(verifyEmail); // La nouvelle route
+
+// Route Profil (Protégée)
+router.put('/profile', protect, updateUserProfile);
 
 module.exports = router;

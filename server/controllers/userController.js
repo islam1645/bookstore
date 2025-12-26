@@ -61,13 +61,11 @@ const registerUser = asyncHandler(async (req, res) => {
         message: "Compte créé ! Veuillez vérifier vos emails pour le code."
       });
     } catch (error) {
-      // --- CORRECTION CRUCIALE ICI ---
-      // On affiche l'erreur exacte dans la console (Visible dans les Logs Render)
+      // LOGS pour debugger Render
       console.error("ERREUR DÉTAILLÉE NODEMAILER :", error); 
 
       await User.findByIdAndDelete(user._id); // On supprime l'user si l'email échoue
       res.status(500);
-      // On renvoie le message technique pour t'aider à débugger
       throw new Error("Erreur d'envoi d'email : " + error.message);
     }
   } else {
@@ -176,7 +174,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true, data: "Email envoyé" });
   } catch (error) {
-    console.error("Erreur Reset Password Email:", error); // Ajout log ici aussi
+    console.error("Erreur Reset Password Email:", error);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
@@ -228,4 +226,54 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 // @desc    Mettre à jour le profil utilisateur
 // @route   PUT /api/users/profile
-// @access  Privé
+// @access  Privé (Nécessite d'être connecté)
+const updateUserProfile = asyncHandler(async (req, res) => {
+  // req.user vient du middleware 'protect'
+  const user = await User.findById(req.user._id);
+
+  if (user) {
+    // On garde l'ancien nom/email si le client n'envoie rien de nouveau
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    // Si le client envoie un mot de passe, on le change
+    if (req.body.password) {
+      if (req.body.password.length < 8) {
+        res.status(400);
+        throw new Error('Le mot de passe doit contenir au moins 8 caractères');
+      }
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      token: generateToken(updatedUser._id),
+    });
+  } else {
+    res.status(404);
+    throw new Error('Utilisateur non trouvé');
+  }
+});
+
+// --- FONCTION MANQUANTE : GENERATE TOKEN ---
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
+};
+
+// --- EXPORTATIONS (C'est ça qui manquait !) ---
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    forgotPassword, 
+    resetPassword, 
+    updateUserProfile, 
+    verifyEmail 
+};
