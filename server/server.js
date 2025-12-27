@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv').config();
 const cors = require('cors'); // Assure-toi que c'est bien importé
 const connectDB = require('./config/db');
+const packRoutes = require('./routes/packRoutes');
 
 connectDB();
 
@@ -30,6 +31,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api/packs', packRoutes);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Serveur démarré sur le port ${port}`));
