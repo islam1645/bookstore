@@ -3,28 +3,32 @@ const router = express.Router();
 const {
   registerUser,
   loginUser,
-  verifyEmail,       // <--- C'est souvent celle-ci qui manque !
+  verifyEmail,
   forgotPassword,
   resetPassword,
-  updateUserProfile
+  updateUserProfile,
+  getUsers,           // Ajouté pour le dashboard
+  toggleUserStatus    // Ajouté pour activer/bloquer
 } = require('../controllers/userController');
 
-const { protect } = require('../middleware/authMiddleware');
+// Import des middlewares : protect (connecté) et admin (est administrateur)
+const { protect, admin } = require('../middleware/authMiddleware');
 
-// Route d'inscription (Création + Envoi OTP)
+// --- ROUTES PUBLIQUES ---
 router.post('/', registerUser);
-
-// Route de vérification OTP (Nouvelle !)
 router.post('/verify-email', verifyEmail);
-
-// Route de connexion
 router.post('/login', loginUser);
-
-// Routes Mot de passe oublié
 router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:resetToken', resetPassword);
 
-// Route Profil (Protégée)
+// --- ROUTES PRIVÉES (Utilisateur connecté) ---
 router.put('/profile', protect, updateUserProfile);
+
+// --- ROUTES ADMIN (Toi uniquement) ---
+// Récupérer tous les utilisateurs pour ton Dashboard
+router.get('/', protect, admin, getUsers);
+
+// Autoriser ou bloquer un compte manuellement
+router.put('/:id/status', protect, admin, toggleUserStatus);
 
 module.exports = router;

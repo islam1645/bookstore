@@ -1,32 +1,36 @@
-const nodemailer = require('nodemailer');
+const Brevo = require('@getbrevo/brevo');
 
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com', // On force l'hôte Brevo
-    port: 465,
-    secure: true, 
-    auth: {
-      // ICI on utilise les variables techniques pour se CONNECTER
-      user: process.env.EMAIL_USER, 
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
+  try {
+    let defaultClient = Brevo.ApiClient.instance;
+    
+    // Configuration de la clé API
+    let apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
-  const message = {
-    // ICI on met ton VRAI email pour l'ENVOI (Visible par le client)
-    // Remplace bien 'saidoun.islam@gmail.com' par ton email si différent
-    from: `KutubDZ <saidoun.islam@gmail.com>`, 
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-  };
+    let apiInstance = new Brevo.TransactionalEmailsApi();
+    let sendSmtpEmail = new Brevo.SendSmtpEmail();
 
-  console.log("Connexion SMTP avec User:", process.env.EMAIL_USER); // Log de debug
-  await transporter.sendMail(message);
-  console.log("Email envoyé avec succès !");
+    // Configuration de l'email
+    sendSmtpEmail = {
+      sender: { name: "KutubDZ", email: "saidoun.islam@gmail.com" },
+      to: [{ email: options.email }],
+      subject: options.subject,
+      textContent: options.message,
+    };
+
+    console.log(`[API Brevo] Tentative d'envoi à : ${options.email}`);
+    
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    
+    console.log(`[API Brevo] Succès ! ID: ${data.messageId}`);
+    return data;
+  } catch (error) {
+    console.error("[API Brevo] Erreur d'envoi :");
+    // Affiche plus de détails sur l'erreur retournée par Brevo
+    console.error(error.response ? error.response.body : error.message);
+    throw new Error("L'email n'a pas pu être envoyé via l'API.");
+  }
 };
 
 module.exports = sendEmail;

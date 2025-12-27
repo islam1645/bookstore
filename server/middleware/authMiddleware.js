@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 
-// Middleware Strict (Bloque si pas connecté)
+// 1. MIDDLEWARE STRICT : Bloque l'accès si l'utilisateur n'est pas connecté
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -10,10 +10,18 @@ const protect = asyncHandler(async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // On récupère l'user SANS son mot de passe
       req.user = await User.findById(decoded.id).select('-password');
+      
+      if (!req.user) {
+        res.status(401);
+        throw new Error('Utilisateur non trouvé');
+      }
+      
       next();
     } catch (error) {
-      console.error(error);
+      console.error("Erreur Token Protect:", error.message);
       res.status(401);
       throw new Error('Non autorisé, token invalide');
     }
@@ -21,40 +29,42 @@ const protect = asyncHandler(async (req, res, next) => {
 
   if (!token) {
     res.status(401);
-    throw new Error('Non autorisé, pas de token');
+    throw new Error('Non autorisé, pas de token fourni');
   }
 });
 
-// --- NOUVEAU MIDDLEWARE : SOUPLE (Accepte Invités et Membres) ---
+// 2. MIDDLEWARE OPTIONNEL : Identifie l'user s'il y a un token, sinon laisse passer en "invité"
 const optionalProtect = asyncHandler(async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      // On vérifie seulement si le token n'est pas une chaine vide ou "null"
+      
       if (token && token !== 'null' && token !== 'undefined') {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          req.user = await User.findById(decoded.id).select('-password');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userFound = await User.findById(decoded.id).select('-password');
+        
+        if (userFound) {
+          req.user = userFound;
+        }
       }
     } catch (error) {
-      // Si le token est invalide, on ne fait rien (on continue en tant qu'invité)
-      console.log("Token invité ignoré");
+      // En cas d'erreur sur le token, on ne bloque pas, on continue simplement sans req.user
+      console.log("Navigation en mode invité (Token invalide)");
     }
   }
-  // Dans tous les cas, on passe à la suite !
   next();
 });
-// ---------------------------------------------------------------
 
+// 3. MIDDLEWARE ADMIN : Bloque l'accès si l'utilisateur n'est pas Administrateur
 const admin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
   } else {
     res.status(401);
-    throw new Error('Non autorisé comme admin');
+    throw new Error('Action réservée aux administrateurs');
   }
 };
 
-// N'oubliez pas d'exporter optionalProtect
 module.exports = { protect, admin, optionalProtect };

@@ -44,7 +44,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (user) {
     console.log("4. Utilisateur créé avec ID:", user._id);
-    console.log("   Champs OTP en BDD:", user.otp);
 
     const message = `Votre code de vérification pour KutubDZ est : ${otpCode}`;
     try {
@@ -56,13 +55,15 @@ const registerUser = asyncHandler(async (req, res) => {
       });
       
       console.log("6. Email envoyé avec succès!");
+      // On renvoie l'email pour que le frontend puisse l'utiliser pour la redirection OTP
       res.status(201).json({
         success: true,
+        email: user.email,
         message: "Compte créé ! Veuillez vérifier vos emails pour le code."
       });
     } catch (error) {
       console.error("ERREUR CRITIQUE EMAIL :", error.message); 
-      // On supprime l'user pour permettre de recommencer proprement
+      // On supprime l'user pour permettre de recommencer proprement si le mail échoue
       await User.findByIdAndDelete(user._id); 
       res.status(500);
       throw new Error("Erreur d'envoi d'email : " + error.message);
@@ -94,6 +95,25 @@ const verifyEmail = asyncHandler(async (req, res) => {
   } else {
     res.status(400);
     throw new Error("Code invalide ou expiré");
+  }
+});
+
+// @desc    Obtenir tous les utilisateurs (Admin)
+const getUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+  res.json(users);
+});
+
+// @desc    Activer/Bloquer un utilisateur (Admin)
+const toggleUserStatus = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    user.isVerified = !user.isVerified;
+    await user.save();
+    res.json({ message: "Statut mis à jour", isVerified: user.isVerified });
+  } else {
+    res.status(404);
+    throw new Error("Utilisateur non trouvé");
   }
 });
 
@@ -141,7 +161,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const message = `Lien de réinitialisation : \n\n ${resetUrl}`;
 
   try {
-    await sendEmail({ email: user.email, subject: 'Réinitialisation', message });
+    await sendEmail({ email: user.email, subject: 'KutubDZ - Réinitialisation', message });
     res.status(200).json({ success: true, data: "Email envoyé" });
   } catch (error) {
     user.resetPasswordToken = undefined;
@@ -210,5 +230,7 @@ module.exports = {
     forgotPassword, 
     resetPassword, 
     updateUserProfile, 
-    verifyEmail 
+    verifyEmail,
+    getUsers,
+    toggleUserStatus
 };
