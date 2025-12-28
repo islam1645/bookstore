@@ -16,21 +16,27 @@ import {
 // --- IMPORTS GRAPHIQUES ---
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// --- IMPORTS DES NOUVEAUX MODULES (Créés précédemment) ---
-// Si tu n'as pas encore créé ces fichiers, commente ces deux lignes pour éviter l'erreur
-import AdminUsers from "../components/AdminUsers";
-import AdminPacks from "../components/AdminPacks";
+// --- IMPORTS DES NOUVEAUX MODULES ---
+import AdminUsers from '../components/AdminUsers'; 
+import AdminPacks from '../components/AdminPacks';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // --- RECUPERATION REDUX ---
+  // --- RECUPERATION REDUX SECURISEE ---
   const { user } = useSelector((state) => state.auth);
-  // On utilise || [] pour garantir que ce sont toujours des tableaux, même si l'API renvoie null au début
-  const { books = [] } = useSelector((state) => state.books); 
-  const { orders = [], stats = [] } = useSelector((state) => state.order);
-  const { categories = [] } = useSelector((state) => state.category);
+  
+  // Correction: On accède aux états avec une sécurité (?. et || [])
+  const bookState = useSelector((state) => state.books);
+  const books = bookState?.books || []; 
+
+  const orderState = useSelector((state) => state.order);
+  const orders = orderState?.orders || [];
+  const stats = orderState?.stats || [];
+
+  const categoryState = useSelector((state) => state.category);
+  const categories = categoryState?.categories || [];
 
   // --- ETATS LOCAUX ---
   const [activeTab, setActiveTab] = useState('stats');
@@ -55,7 +61,6 @@ const Dashboard = () => {
     if (!user || !user.isAdmin) {
       navigate('/login');
     } else {
-      // On charge tout au démarrage
       dispatch(getBooks());
       dispatch(getAllOrders());
       dispatch(getCategories());
@@ -64,10 +69,11 @@ const Dashboard = () => {
   }, [user, navigate, dispatch]);
 
   // --- OPTIMISATION : CALCUL DES DONNÉES (useMemo) ---
-  // On utilise useMemo pour ne pas recalculer ça à chaque clic sur un bouton (Performance)
   
   const chartData = useMemo(() => {
+    // Protection anti-crash si stats n'est pas un tableau
     if (!Array.isArray(stats)) return [];
+    
     const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
     return stats.map(item => {
       const monthIndex = (item._id && item._id.month) ? item._id.month - 1 : 0;
@@ -89,27 +95,30 @@ const Dashboard = () => {
   }, [stats]);
 
   const soldBooks = useMemo(() => {
-    if (!orders) return [];
+    // Protection anti-crash si orders n'est pas un tableau
+    if (!Array.isArray(orders)) return [];
+
     return orders.reduce((acc, order) => {
-      // On vérifie que la commande est payée ou livrée pour compter la vente (optionnel, ici on compte tout)
-      order.orderItems.forEach(item => {
-          const existingItem = acc.find(i => i.title === item.title);
-          if (existingItem) {
-              existingItem.qty += item.qty;
-              existingItem.totalRevenue += item.qty * item.price;
-          } else {
-              acc.push({ 
-                  title: item.title, 
-                  qty: item.qty, 
-                  totalRevenue: item.qty * item.price 
-              });
-          }
-      });
+      if(order.orderItems && Array.isArray(order.orderItems)) {
+          order.orderItems.forEach(item => {
+              const existingItem = acc.find(i => i.title === item.title);
+              if (existingItem) {
+                  existingItem.qty += item.qty;
+                  existingItem.totalRevenue += item.qty * item.price;
+              } else {
+                  acc.push({ 
+                      title: item.title, 
+                      qty: item.qty, 
+                      totalRevenue: item.qty * item.price 
+                  });
+              }
+          });
+      }
       return acc;
-    }, []).sort((a, b) => b.qty - a.qty); // Tri par quantité vendue
+    }, []).sort((a, b) => b.qty - a.qty);
   }, [orders]);
 
-  const pendingOrdersCount = orders ? orders.filter(o => !o.isDelivered).length : 0;
+  const pendingOrdersCount = Array.isArray(orders) ? orders.filter(o => !o.isDelivered).length : 0;
 
   // --- HANDLERS (LIVRES) ---
   const handleBookSubmit = (e) => {
@@ -158,7 +167,7 @@ const Dashboard = () => {
       if (newCategory.trim()) { 
           const catData = { 
             name: newCategory, 
-            nameAr: newCategoryAr, // Envoi du champ Arabe
+            nameAr: newCategoryAr,
             image: newCatImage 
           };
 
@@ -211,7 +220,6 @@ const Dashboard = () => {
   };
 
   // --- NAVIGATION TAB HELPER ---
-  // Petite fonction pour rendre le code du menu plus propre
   const TabButton = ({ id, label, icon: Icon, alertCount }) => (
     <button 
       onClick={() => setActiveTab(id)} 
@@ -239,9 +247,7 @@ const Dashboard = () => {
           <TabButton id="sales" label="Ventes" icon={ShoppingBag} />
           <TabButton id="books" label="Livres" icon={Book} />
           <TabButton id="categories" label="Catégories" icon={Tags} />
-          
-          {/* NOUVEAUX ONGLETS POUR LES MODULES */}
-          <div className="w-px bg-gray-300 mx-2"></div> {/* Séparateur visuel */}
+          <div className="w-px bg-gray-300 mx-2"></div>
           <TabButton id="users" label="Utilisateurs" icon={Users} />
           <TabButton id="packs" label="Packs Promo" icon={Gift} />
         </div>
@@ -266,23 +272,29 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm h-96 w-full">
+            {/* CORRECTION DU GRAPHIQUE ICI : Height fixé */}
+            <div className="bg-white p-6 rounded-xl shadow-sm w-full">
                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><TrendingUp /> Performances Financières</h2>
-                {chartData.length > 0 ? (
-                    <div style={{ width: '100%', height: '100%' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="Ventes" fill="#1e3a8a" name="Ventes (CA)" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Bénéfice" fill="#16a34a" name="Bénéfice Net" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                
+                <div style={{ width: '100%', height: '400px' }}> {/* Hauteur explicite obligatoire pour Recharts */}
+                  {chartData && chartData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip />
+                              <Legend />
+                              <Bar dataKey="Ventes" fill="#1e3a8a" name="Ventes (CA)" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="Bénéfice" fill="#16a34a" name="Bénéfice Net" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                      </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-400">
+                      Aucune donnée statistique disponible.
                     </div>
-                ) : <div className="h-full flex items-center justify-center text-gray-400">Aucune donnée confirmée pour le moment.</div>}
+                  )}
+                </div>
             </div>
           </div>
         )}
